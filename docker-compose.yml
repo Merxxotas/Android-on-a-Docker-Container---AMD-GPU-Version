@@ -9,7 +9,7 @@ services:
         - IMG_TYPE=google_apis
     ports:
       - 5554:5554
-      - 5555:5555
+      - 127.0.0.1:5555:5555
     environment:
       - DISABLE_ANIMATION=false
       - DISABLE_HIDDEN_POLICY=true
@@ -37,7 +37,7 @@ services:
         - IMG_TYPE=google_apis
     ports:
       - 5554:5554
-      - 5555:5555
+      - 127.0.0.1:5555:5555
     environment:
       - DISABLE_ANIMATION=false
       - DISABLE_HIDDEN_POLICY=true
@@ -71,7 +71,7 @@ services:
         - IMG_TYPE=google_apis_playstore
     ports:
       - 5554:5554
-      - 5555:5555
+      - 127.0.0.1:5555:5555
     environment:
       - DISABLE_ANIMATION=false
       - DISABLE_HIDDEN_POLICY=true

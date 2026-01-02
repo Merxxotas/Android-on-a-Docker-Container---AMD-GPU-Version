@@ -1,4 +1,4 @@
-FROM openjdk:18-jdk-slim
+FROM openjdk:21-jdk-slim
 
 ENV DEBIAN_FRONTEND noninteractive
 

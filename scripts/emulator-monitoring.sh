@@ -32,16 +32,20 @@ function wait_for_boot() {
   update_state "ANDROID_BOOTING"
 
   # Waiting for the ADB server to start.
-  while [ -n "$(adb wait-for-device > /dev/null)" ]; do
-    adb wait-for-device
-    sleep 1
-  done
-  
+  adb wait-for-device
+
   # Waiting for the boot sequence to be completed.
+  TIMEOUT=300
+  COUNTER=0
   COMPLETED=$(adb shell getprop sys.boot_completed | tr -d '\r')
   while [ "$COMPLETED" != "1" ]; do
+    if [ $COUNTER -ge $TIMEOUT ]; then
+      echo "Error: Emulator failed to boot within $TIMEOUT seconds."
+      exit 1
+    fi
     COMPLETED=$(adb shell getprop sys.boot_completed | tr -d '\r')
     sleep 5
+    COUNTER=$((COUNTER + 5))
   done
   sleep 1
   if [ "$DISABLE_ANIMATION" = "true" ]; then
