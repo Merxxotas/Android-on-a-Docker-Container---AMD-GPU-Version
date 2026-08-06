@@ -6,6 +6,7 @@
 [![Android 13](https://img.shields.io/badge/Android-API%2033%20%7C%20Play%20Store-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com/)
 [![scrcpy](https://img.shields.io/badge/scrcpy-60%20FPS-000000?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Genymobile/scrcpy)
 [![CI/CD Pipeline](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
+[![CI/CD & Automated Testing Pipeline](https://github.com/Merxxotas/Android-on-a-Docker-Container---AMD-GPU-Version/actions/workflows/ci.yml/badge.svg)](https://github.com/Merxxotas/Android-on-a-Docker-Container---AMD-GPU-Version/actions/workflows/ci.yml)
 
 An optimized environment to run an **Android 13 (API 33)** emulator with **Google Play Store** inside a KVM + AMD GPU DRI accelerated Docker container, featuring smooth **60 FPS** screen mirroring with **scrcpy**, 8 CPU cores, and an automated CI/CD test suite.
 
