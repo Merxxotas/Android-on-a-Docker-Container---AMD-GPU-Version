@@ -1,5 +1,5 @@
 # 🤖 Android 13 (API 33) Docker Setup with AMD GPU Acceleration
-# This is a test
+
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![KVM](https://img.shields.io/badge/KVM-Accelerated-FF6600?style=for-the-badge&logo=linux&logoColor=white)](https://www.linux-kvm.org/)
 [![AMD Radeon](https://img.shields.io/badge/AMD%20GPU-Mesa%20DRI-ED1C24?style=for-the-badge&logo=amd&logoColor=white)](https://www.amd.com/)
