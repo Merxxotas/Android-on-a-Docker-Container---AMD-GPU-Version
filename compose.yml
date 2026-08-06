@@ -24,8 +24,8 @@ services:
       - "5554:5554"
       - "127.0.0.1:5555:5555"
     volumes:
-      - ~/.android/adbkey:/root/.android/adbkey:ro
-      - ~/.android/adbkey.pub:/root/.android/adbkey.pub:ro
+      - ./keys/adbkey:/root/.android/adbkey:ro
+      - ./keys/adbkey.pub:/root/.android/adbkey.pub:ro
       - ./data:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"

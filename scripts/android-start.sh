@@ -2,6 +2,13 @@
 
 set -e
 
+# Sync host ADB key to ./keys/ if available on local machine
+if [ -f "$HOME/.android/adbkey" ]; then
+  mkdir -p ./keys
+  cp "$HOME/.android/adbkey" ./keys/adbkey
+  cp "$HOME/.android/adbkey.pub" ./keys/adbkey.pub
+fi
+
 echo "🚀 Starting Android Emulator Docker container..."
 docker compose up -d
 

@@ -15,6 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Ensure Keys Folder Exists
+        run: |
+          mkdir -p keys
+          touch keys/.gitkeep
+
       - name: Validate Docker Compose Configuration
         run: |
           docker compose config
@@ -35,11 +40,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Enable KVM Hardware Acceleration
+      - name: Setup Host Devices & Keys for CI
         run: |
-          sudo apt-get update && sudo apt-get install -y qemu-kvm libvirt-daemon-system cpu-checker
-          sudo kvm-ok || echo "KVM status checked"
+          sudo apt-get update && sudo apt-get install -y qemu-kvm libvirt-daemon-system cpu-checker android-tools-adb
           sudo chmod 666 /dev/kvm || true
+          sudo mkdir -p /dev/dri || true
+          mkdir -p keys
+          if [ ! -f keys/adbkey ]; then
+            adb keygen keys/adbkey
+          fi
 
       - name: Build Android Docker Image
         run: |
@@ -51,7 +60,6 @@ jobs:
 
       - name: Wait for ADB & Boot Completion
         run: |
-          sudo apt-get install -y android-tools-adb
           echo "Waiting for ADB connection..."
           for i in {1..30}; do
             if adb connect 127.0.0.1:5555 2>&1 | grep -qE "connected|already"; then
