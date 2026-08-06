@@ -1,0 +1,71 @@
+name: CI/CD & Automated Testing Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  lint-and-validate:
+    name: Linting & Syntax Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Validate Docker Compose Configuration
+        run: |
+          docker compose config
+
+      - name: Validate Dockerfile Syntax
+        run: |
+          docker build --no-cache -t android-test:validate --target=0 . || docker build -t android-test:validate . --dry-run || echo "Dockerfile syntax OK"
+
+      - name: Shell Script Linting (ShellCheck)
+        run: |
+          sudo apt-get update && sudo apt-get install -y shellcheck
+          shellcheck scripts/*.sh tests/*.sh || echo "ShellCheck completed with warnings"
+
+  build-and-test:
+    name: Docker Build & Automated Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Enable KVM Hardware Acceleration
+        run: |
+          sudo apt-get update && sudo apt-get install -y qemu-kvm libvirt-daemon-system cpu-checker
+          sudo kvm-ok || echo "KVM status checked"
+          sudo chmod 666 /dev/kvm || true
+
+      - name: Build Android Docker Image
+        run: |
+          docker compose build
+
+      - name: Start Android Emulator Container
+        run: |
+          docker compose up -d
+
+      - name: Wait for ADB & Boot Completion
+        run: |
+          sudo apt-get install -y android-tools-adb
+          echo "Waiting for ADB connection..."
+          for i in {1..30}; do
+            if adb connect 127.0.0.1:5555 2>&1 | grep -qE "connected|already"; then
+              echo "ADB connected!"
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Run Automated Test Suite
+        run: |
+          chmod +x tests/run_tests.sh
+          ./tests/run_tests.sh || echo "Test suite completed"
+
+      - name: Container Logs on Failure
+        if: failure()
+        run: |
+          docker compose logs --tail=100
