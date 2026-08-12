@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 LABEL maintainer="Custom AMD Build"
-LABEL description="Android Emulator Docker image with AMD GPU DRI Acceleration"
+LABEL description="Android Emulator Docker image (Standard KVM)"
 
 ARG INSTALL_ANDROID_SDK=1
 ARG API_LEVEL=33
@@ -22,7 +22,7 @@ ARG IMG_TYPE=google_apis_playstore
 ARG ARCHITECTURE=x86_64
 ARG CMD_LINE_VERSION=11076708_latest
 ARG DEVICE_ID=pixel
-ARG GPU_ACCELERATED=true
+ARG GPU_ACCELERATED=false
 
 ENV ANDROID_SDK_ROOT=/opt/android \
     ANDROID_PLATFORM_VERSION="platforms;android-$API_LEVEL" \

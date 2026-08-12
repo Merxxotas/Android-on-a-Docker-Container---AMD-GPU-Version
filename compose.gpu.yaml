@@ -2,12 +2,12 @@ services:
   android:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.gpu
       args:
         - API_LEVEL=33
         - CMD_LINE_VERSION=11076708_latest
         - IMG_TYPE=google_apis_playstore
-        - GPU_ACCELERATED=false
+        - GPU_ACCELERATED=true
     container_name: android
     environment:
       - RAM_SIZE=8G
@@ -19,6 +19,7 @@ services:
       - TZ=America/Bogota
     devices:
       - /dev/kvm:/dev/kvm
+      - /dev/dri:/dev/dri
     ports:
       - "5554:5554"
       - "127.0.0.1:5555:5555"
