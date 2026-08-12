@@ -27,8 +27,10 @@ An optimized environment to run an **Android 13 (API 33)** emulator with **Googl
 
 ```text
 .
-├── compose.yml                 # Root Docker Compose configuration (AMD DRI, 8 Cores, 8G RAM, 64G Disk)
-├── Dockerfile                  # Customized Dockerfile with Mesa DRI drivers & JDK 17
+├── compose.yml                 # Standard KVM Docker Compose configuration (8 Cores, 8G RAM, 64G Disk)
+├── compose.gpu.yaml            # GPU-accelerated Docker Compose deployment (AMD DRI passthrough)
+├── Dockerfile                  # Base Dockerfile for standard KVM deployment
+├── Dockerfile.gpu              # Dockerfile for GPU-accelerated deployment (Mesa DRI & Vulkan)
 ├── README.md                   # Main project README & quick reference
 ├── .github/
 │   └── workflows/

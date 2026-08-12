@@ -125,3 +125,58 @@ The repository includes a comprehensive automated test suite and GitHub Actions 
 ### GitHub Actions Pipeline (`.github/workflows/ci.yml`):
 - Triggers automatically on every `push` or `pull_request` to `main`.
 - Runs ShellCheck linting, Docker build, KVM emulation boot, and automated tests.
+
+---
+
+## 7. Custom Dockerfile Builds & Execution
+
+The repository includes dedicated `Dockerfile` and `Dockerfile.gpu` files that can be used via Docker Compose or directly via the Docker CLI.
+
+### Option A: Using Docker Compose (Recommended)
+
+- **Standard KVM Deployment (`Dockerfile`)**:
+  ```bash
+  docker compose build
+  docker compose up -d
+  ```
+
+- **GPU-Accelerated Passthrough (`Dockerfile.gpu`)**:
+  ```bash
+  docker compose -f compose.gpu.yaml build
+  docker compose -f compose.gpu.yaml up -d
+  ```
+
+---
+
+### Option B: Using Direct Docker CLI (`docker build` / `docker run`)
+
+- **Standard Build & Run (`Dockerfile`)**:
+  ```bash
+  # Build standard image
+  docker build -t android-custom .
+
+  # Run standard container
+  docker run -d --name android \
+    --device=/dev/kvm:/dev/kvm --privileged \
+    -p 5554:5554 -p 127.0.0.1:5555:5555 \
+    -v $(pwd)/keys/adbkey:/root/.android/adbkey:ro \
+    -v $(pwd)/keys/adbkey.pub:/root/.android/adbkey.pub:ro \
+    -v $(pwd)/data:/data \
+    android-custom
+  ```
+
+- **GPU Build & Run (`Dockerfile.gpu`)**:
+  ```bash
+  # Build GPU-accelerated image using -f Dockerfile.gpu
+  docker build -f Dockerfile.gpu -t android-gpu-custom .
+
+  # Run GPU-accelerated container
+  docker run -d --name android-gpu \
+    --device=/dev/kvm:/dev/kvm --device=/dev/dri:/dev/dri --privileged \
+    -p 5554:5554 -p 127.0.0.1:5555:5555 \
+    -v $(pwd)/keys/adbkey:/root/.android/adbkey:ro \
+    -v $(pwd)/keys/adbkey.pub:/root/.android/adbkey.pub:ro \
+    -v $(pwd)/data:/data \
+    android-gpu-custom
+  ```
+

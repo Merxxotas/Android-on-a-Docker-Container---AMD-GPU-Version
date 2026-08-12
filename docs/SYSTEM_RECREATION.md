@@ -52,16 +52,55 @@ ls -l /dev/kvm /dev/dri
 
 ---
 
-## 3. Project Configuration (`compose.yml`)
+## 3. Project Configuration (`compose.yml` & `compose.gpu.yaml`)
 
-The root `compose.yml` configures 8 CPU cores, 8 GB RAM, 64 GB disk storage, and host ADB key mounts:
+The repository supports both standard KVM deployment (`compose.yml`) and GPU-accelerated deployment (`compose.gpu.yaml`):
 
+### Standard KVM Configuration (`compose.yml`)
 ```yaml
 services:
   android:
     build:
       context: .
-      dockerfile: ./Dockerfile
+      dockerfile: Dockerfile
+      args:
+        - API_LEVEL=33
+        - CMD_LINE_VERSION=11076708_latest
+        - IMG_TYPE=google_apis_playstore
+        - GPU_ACCELERATED=false
+    container_name: android
+    environment:
+      - RAM_SIZE=8G
+      - DISK_SIZE=64G
+      - CPU_CORES=8
+      - DISABLE_ANIMATION=false
+      - DISABLE_HIDDEN_POLICY=true
+      - SKIP_AUTH=true
+      - TZ=America/Bogota
+    devices:
+      - /dev/kvm:/dev/kvm
+    ports:
+      - "5554:5554"
+      - "127.0.0.1:5555:5555"
+    volumes:
+      - ./keys/adbkey:/root/.android/adbkey:ro
+      - ./keys/adbkey.pub:/root/.android/adbkey.pub:ro
+      - ./data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    privileged: true
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+```
+
+### GPU-Accelerated Configuration (`compose.gpu.yaml`)
+```yaml
+services:
+  android:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
       args:
         - API_LEVEL=33
         - CMD_LINE_VERSION=11076708_latest
@@ -72,7 +111,7 @@ services:
       - RAM_SIZE=8G
       - DISK_SIZE=64G
       - CPU_CORES=8
-      - DISABLE_ANIMATION=true
+      - DISABLE_ANIMATION=false
       - DISABLE_HIDDEN_POLICY=true
       - SKIP_AUTH=true
       - TZ=America/Bogota
@@ -83,8 +122,8 @@ services:
       - "5554:5554"
       - "127.0.0.1:5555:5555"
     volumes:
-      - ~/.android/adbkey:/root/.android/adbkey:ro
-      - ~/.android/adbkey.pub:/root/.android/adbkey.pub:ro
+      - ./keys/adbkey:/root/.android/adbkey:ro
+      - ./keys/adbkey.pub:/root/.android/adbkey.pub:ro
       - ./data:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -104,9 +143,14 @@ services:
    ```
 
 2. **Build & Start Docker Container**:
-   ```bash
-   docker compose up -d
-   ```
+   - **Standard KVM**:
+     ```bash
+     docker compose up -d
+     ```
+   - **GPU-Accelerated Passthrough**:
+     ```bash
+     docker compose -f compose.gpu.yaml up -d
+     ```
 
 3. **Verify ADB Connection & Boot Status**:
    ```bash
