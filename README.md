@@ -63,6 +63,8 @@ An optimized environment to run an **Android 13 (API 33)** emulator with **Googl
    ./scripts/android-start.sh
    ```
 
+   On first start, the script creates a project-specific ADB key outside this repository and reuses it on later starts. Keys are not regenerated daily.
+
 2. **Run Automated Test Suite**:
    ```bash
    ./tests/run_tests.sh
@@ -86,6 +88,7 @@ An optimized environment to run an **Android 13 (API 33)** emulator with **Googl
 Refer to the complete technical guides in the `docs/` directory:
 - [📘 System Recreation Guide](docs/SYSTEM_RECREATION.md)
 - [📙 User Manual (scrcpy, ADB & Specs)](docs/USER_MANUAL.md)
+- [Security Notes](SECURITY.md)
 
 ---
 

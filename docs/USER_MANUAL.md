@@ -10,7 +10,7 @@ Complete reference manual for using the Android 13 Docker emulator, launching 60
 
 ### High-Performance Connection (60 FPS + H.264):
 ```bash
-scrcpy -s 127.0.0.1:5555 --max-fps=60 --video-codec=h264 --video-bit-rate=8M
+ADB=./scripts/project-adb.sh scrcpy -s 127.0.0.1:5555 --max-fps=60 --video-codec=h264 --video-bit-rate=8M
 ```
 
 ### Useful `scrcpy` Shortcuts & Commands:
@@ -33,19 +33,19 @@ You can execute ADB commands directly against the containerized emulator:
 
 ```bash
 # Connect ADB daemon to emulator container
-adb connect 127.0.0.1:5555
+./scripts/project-adb.sh connect 127.0.0.1:5555
 
 # List connected devices
-adb devices
+./scripts/project-adb.sh devices
 
 # Install an APK file
-adb -s 127.0.0.1:5555 install my-application.apk
+./scripts/project-adb.sh -s 127.0.0.1:5555 install my-application.apk
 
 # Access Android interactive shell
-adb -s 127.0.0.1:5555 shell
+./scripts/project-adb.sh -s 127.0.0.1:5555 shell
 
 # Inspect logcat system logs
-adb -s 127.0.0.1:5555 logcat
+./scripts/project-adb.sh -s 127.0.0.1:5555 logcat
 ```
 
 ---
@@ -69,18 +69,23 @@ docker compose up -d
 
 ---
 
-## 4. ADB Authentication Keys (`keys/`)
+## 4. ADB Authentication Keys
 
-For `google_apis_playstore` system images, Android requires pre-seeded ADB keys to skip the interactive "Allow USB Debugging" modal.
+For `google_apis_playstore` system images, Android requires an authenticated ADB key pair. This project keeps the project key outside the repository and uses a dedicated local ADB server on port `5038`.
 
-- **Host Key Location**:
-  - `~/.android/adbkey` (Mounted live into container `/root/.android/adbkey`)
-  - `~/.android/adbkey.pub` (Mounted live into container `/root/.android/adbkey.pub`)
+- **Default project key location**:
+  - `~/.local/share/android-docker/adb-home/.android/adbkey`
+  - `~/.local/share/android-docker/adb-home/.android/adbkey.pub`
 
-If you ever need to generate fresh ADB keys:
+The normal start command creates this pair automatically. For direct Compose use, initialize it once:
 ```bash
-adb keygen keys/adbkey
+./scripts/setup-adb-key.sh
+docker compose up -d
 ```
+
+The key is reused on later starts and is not rotated daily. Set `ANDROID_DOCKER_ADB_HOME` to use another private directory. Set `ANDROID_DOCKER_ADB_SERVER_PORT` to change the project ADB server port. Your normal ADB server on port `5037` remains separate.
+
+Never commit these files or copy them into the Docker build context. See [Security Notes](../SECURITY.md) for incident response and migration guidance.
 
 ---
 
@@ -117,7 +122,7 @@ The repository includes a comprehensive automated test suite and GitHub Actions 
 2. `/dev/kvm` hardware virtualization access
 3. `/dev/dri` AMD graphics render node access
 4. `compose.yml` configuration syntax validation
-5. ADB socket connection on `127.0.0.1:5555`
+5. Authenticated ADB socket connection on `127.0.0.1:5555`
 6. `sys.boot_completed` status from Android OS
 7. Android API level verification (API 33)
 8. Google Play Store package verification (`com.android.vending`)
@@ -159,8 +164,8 @@ The repository includes dedicated `Dockerfile` and `Dockerfile.gpu` files that c
   docker run -d --name android \
     --device=/dev/kvm:/dev/kvm --privileged \
     -p 5554:5554 -p 127.0.0.1:5555:5555 \
-    -v $(pwd)/keys/adbkey:/root/.android/adbkey:ro \
-    -v $(pwd)/keys/adbkey.pub:/root/.android/adbkey.pub:ro \
+    -v ${ANDROID_DOCKER_ADB_HOME:-$HOME/.local/share/android-docker/adb-home}/.android/adbkey:/root/.android/adbkey:ro \
+    -v ${ANDROID_DOCKER_ADB_HOME:-$HOME/.local/share/android-docker/adb-home}/.android/adbkey.pub:/root/.android/adbkey.pub:ro \
     -v $(pwd)/data:/data \
     android-custom
   ```
@@ -174,9 +179,8 @@ The repository includes dedicated `Dockerfile` and `Dockerfile.gpu` files that c
   docker run -d --name android-gpu \
     --device=/dev/kvm:/dev/kvm --device=/dev/dri:/dev/dri --privileged \
     -p 5554:5554 -p 127.0.0.1:5555:5555 \
-    -v $(pwd)/keys/adbkey:/root/.android/adbkey:ro \
-    -v $(pwd)/keys/adbkey.pub:/root/.android/adbkey.pub:ro \
+    -v ${ANDROID_DOCKER_ADB_HOME:-$HOME/.local/share/android-docker/adb-home}/.android/adbkey:/root/.android/adbkey:ro \
+    -v ${ANDROID_DOCKER_ADB_HOME:-$HOME/.local/share/android-docker/adb-home}/.android/adbkey.pub:/root/.android/adbkey.pub:ro \
     -v $(pwd)/data:/data \
     android-gpu-custom
   ```
-

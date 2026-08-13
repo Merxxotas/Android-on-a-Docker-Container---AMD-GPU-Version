@@ -75,7 +75,7 @@ services:
       - CPU_CORES=8
       - DISABLE_ANIMATION=false
       - DISABLE_HIDDEN_POLICY=true
-      - SKIP_AUTH=true
+      - SKIP_AUTH=false
       - TZ=America/Bogota
     devices:
       - /dev/kvm:/dev/kvm
@@ -83,8 +83,8 @@ services:
       - "5554:5554"
       - "127.0.0.1:5555:5555"
     volumes:
-      - ./keys/adbkey:/root/.android/adbkey:ro
-      - ./keys/adbkey.pub:/root/.android/adbkey.pub:ro
+      - ${ANDROID_DOCKER_ADB_HOME:-${HOME}/.local/share/android-docker/adb-home}/.android/adbkey:/root/.android/adbkey:ro
+      - ${ANDROID_DOCKER_ADB_HOME:-${HOME}/.local/share/android-docker/adb-home}/.android/adbkey.pub:/root/.android/adbkey.pub:ro
       - ./data:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -113,7 +113,7 @@ services:
       - CPU_CORES=8
       - DISABLE_ANIMATION=false
       - DISABLE_HIDDEN_POLICY=true
-      - SKIP_AUTH=true
+      - SKIP_AUTH=false
       - TZ=America/Bogota
     devices:
       - /dev/kvm:/dev/kvm
@@ -122,8 +122,8 @@ services:
       - "5554:5554"
       - "127.0.0.1:5555:5555"
     volumes:
-      - ./keys/adbkey:/root/.android/adbkey:ro
-      - ./keys/adbkey.pub:/root/.android/adbkey.pub:ro
+      - ${ANDROID_DOCKER_ADB_HOME:-${HOME}/.local/share/android-docker/adb-home}/.android/adbkey:/root/.android/adbkey:ro
+      - ${ANDROID_DOCKER_ADB_HOME:-${HOME}/.local/share/android-docker/adb-home}/.android/adbkey.pub:/root/.android/adbkey.pub:ro
       - ./data:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -142,7 +142,14 @@ services:
    cd /home/merxx/Projects/android_Docker-version
    ```
 
-2. **Build & Start Docker Container**:
+2. **Create the external project ADB key**:
+   ```bash
+   ./scripts/setup-adb-key.sh
+   ```
+
+   This creates one reusable key pair under `~/.local/share/android-docker/adb-home/.android/`. It is not regenerated on each start.
+
+3. **Build & Start Docker Container**:
    - **Standard KVM**:
      ```bash
      docker compose up -d
@@ -152,20 +159,26 @@ services:
      docker compose -f compose.gpu.yaml up -d
      ```
 
-3. **Verify ADB Connection & Boot Status**:
+4. **Verify ADB Connection & Boot Status**:
    ```bash
-   adb connect 127.0.0.1:5555
-   adb devices
-   adb shell getprop sys.boot_completed
+   ./scripts/project-adb.sh connect 127.0.0.1:5555
+   ./scripts/project-adb.sh devices
+   ./scripts/project-adb.sh -s 127.0.0.1:5555 shell getprop sys.boot_completed
    ```
    *(Returns `1` once fully booted).*
 
-4. **Launch 60 FPS Screen Mirroring**:
+5. **Launch 60 FPS Screen Mirroring**:
    ```bash
    ./scripts/android-start.sh
    ```
 
-5. **Run Automated Verification Tests**:
+6. **Run Automated Verification Tests**:
    ```bash
    ./tests/run_tests.sh
    ```
+
+## 5. Key Rotation and AVD Recovery
+
+If a project key is exposed, stop the container, move the existing `data/` directory to a private mode-`0700` quarantine outside the repository, generate a replacement project key, and boot a fresh AVD. Recover only the files you explicitly need from the quarantine. On physical Android devices, revoke USB debugging authorizations before approving a replacement host key.
+
+Do not restore the old key into the repository or image. See [Security Notes](../SECURITY.md) for the complete response checklist.
