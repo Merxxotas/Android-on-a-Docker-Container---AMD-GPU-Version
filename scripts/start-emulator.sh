@@ -4,6 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=emulator-monitoring.sh
+# shellcheck source-path=SCRIPTDIR
 source "$SCRIPT_DIR/emulator-monitoring.sh"
 
 # The emulator console port.
