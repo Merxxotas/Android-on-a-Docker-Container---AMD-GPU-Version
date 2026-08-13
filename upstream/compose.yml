@@ -20,8 +20,6 @@ services:
     tty: true
     stdin_open: true
     volumes:
-      - ./keys/adbkey:/root/.android/adbkey:ro
-      - ./keys/adbkey.pub:/root/.android/adbkey.pub:ro
       - ./android_avd:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -48,9 +46,6 @@ services:
     privileged: true
     tty: true
     stdin_open: true
-    volumes:
-      - ./keys/adbkey:/root/.android/adbkey:ro
-      - ./keys/adbkey.pub:/root/.android/adbkey.pub:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     deploy:

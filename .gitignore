@@ -23,6 +23,10 @@ tmp/
 # Keys & Secrets
 keys/adbkey
 keys/adbkey.pub
+*.key
+*.pub
+.env
+.env.*
 
 # OS & Editor Files
 .DS_Store

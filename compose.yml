@@ -15,7 +15,7 @@ services:
       - CPU_CORES=8
       - DISABLE_ANIMATION=false
       - DISABLE_HIDDEN_POLICY=true
-      - SKIP_AUTH=true
+      - SKIP_AUTH=false
       - TZ=America/Bogota
     devices:
       - /dev/kvm:/dev/kvm
@@ -23,9 +23,21 @@ services:
       - "5554:5554"
       - "127.0.0.1:5555:5555"
     volumes:
-      - ./keys/adbkey:/root/.android/adbkey:ro
-      - ./keys/adbkey.pub:/root/.android/adbkey.pub:ro
-      - ./data:/data
+      - type: bind
+        source: ${ANDROID_DOCKER_ADB_HOME:-${HOME}/.local/share/android-docker/adb-home}/.android/adbkey
+        target: /root/.android/adbkey
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${ANDROID_DOCKER_ADB_HOME:-${HOME}/.local/share/android-docker/adb-home}/.android/adbkey.pub
+        target: /root/.android/adbkey.pub
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./data
+        target: /data
     extra_hosts:
       - "host.docker.internal:host-gateway"
     privileged: true

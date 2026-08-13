@@ -1,22 +1,20 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-# Sync host ADB key to ./keys/ if available on local machine
-if [ -f "$HOME/.android/adbkey" ]; then
-  mkdir -p ./keys
-  cp "$HOME/.android/adbkey" ./keys/adbkey
-  cp "$HOME/.android/adbkey.pub" ./keys/adbkey.pub
-fi
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ADB="$SCRIPT_DIR/project-adb.sh"
 
-echo "🚀 Starting Android Emulator Docker container..."
+"$SCRIPT_DIR/setup-adb-key.sh"
+
+echo "Starting Android Emulator Docker container..."
 docker compose up -d
 
-echo "⏳ Waiting for ADB server port 5555 to open..."
-until adb connect 127.0.0.1:5555 2>/dev/null | grep -q "connected"; do
+echo "Waiting for authenticated ADB on port 5555..."
+until "$PROJECT_ADB" connect 127.0.0.1:5555 2>/dev/null | grep -qE "connected|already"; do
   sleep 2
 done
 
-echo "✅ Connected to Android Emulator via ADB!"
-echo "📺 Launching scrcpy screen mirror..."
-scrcpy -s 127.0.0.1:5555 --max-fps=60 --video-codec=h264 --video-bit-rate=8M
+echo "Connected to Android Emulator via the project ADB server."
+echo "Launching scrcpy screen mirror..."
+ADB="$PROJECT_ADB" scrcpy -s 127.0.0.1:5555 --max-fps=60 --video-codec=h264 --video-bit-rate=8M

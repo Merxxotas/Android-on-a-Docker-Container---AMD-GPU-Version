@@ -43,7 +43,6 @@ WORKDIR /opt
 EXPOSE 5554 5555
 
 RUN mkdir -p /root/.android/ && touch /root/.android/repositories.cfg && mkdir -p /data
-COPY keys/* /root/.android/
 
 COPY scripts/install-sdk.sh /opt/
 RUN chmod +x /opt/install-sdk.sh && /opt/install-sdk.sh
