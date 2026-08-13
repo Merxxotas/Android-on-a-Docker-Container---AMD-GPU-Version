@@ -1,8 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-source ./emulator-monitoring.sh
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=emulator-monitoring.sh
+source "$SCRIPT_DIR/emulator-monitoring.sh"
 
 # The emulator console port.
 EMULATOR_CONSOLE_PORT=5554
@@ -12,7 +14,7 @@ ADB_PORT=5555
 # Parse RAM_SIZE (e.g. 8G -> 8192) or fallback to MEMORY env
 RAW_RAM=${RAM_SIZE:-${MEMORY:-8192}}
 if [[ "$RAW_RAM" =~ ([0-9]+)G ]]; then
-  OPT_MEMORY=$((${BASH_REMATCH[1]} * 1024))
+  OPT_MEMORY=$((BASH_REMATCH[1] * 1024))
 else
   OPT_MEMORY=$RAW_RAM
 fi
@@ -20,14 +22,17 @@ fi
 # Parse DISK_SIZE (e.g. 64G -> 65536) or fallback to 64G
 RAW_DISK=${DISK_SIZE:-64G}
 if [[ "$RAW_DISK" =~ ([0-9]+)G ]]; then
-  OPT_PARTITION_SIZE=$((${BASH_REMATCH[1]} * 1024))
+  OPT_PARTITION_SIZE=$((BASH_REMATCH[1] * 1024))
 else
   OPT_PARTITION_SIZE=${RAW_DISK:-65536}
 fi
 
 OPT_CORES=${CPU_CORES:-${CORES:-4}}
-OPT_SKIP_AUTH=${SKIP_AUTH:-true}
-AUTH_FLAG=
+OPT_SKIP_AUTH=${SKIP_AUTH:-false}
+EXTRA_EMULATOR_FLAGS=()
+if [[ -n "${EXTRA_FLAGS:-}" ]]; then
+  read -r -a EXTRA_EMULATOR_FLAGS <<< "$EXTRA_FLAGS"
+fi
 
 # Start ADB server by listening on all interfaces.
 echo "Starting the ADB server ..."
@@ -56,10 +61,6 @@ else
     --device "$DEVICE_ID"
 fi
 
-if [ "$OPT_SKIP_AUTH" == "true" ]; then
-  AUTH_FLAG="-skip-adb-auth"
-fi
-
 # If GPU acceleration is enabled, we create a virtual framebuffer
 # to be used by the emulator when running with GPU acceleration.
 # We also set the GPU mode to `host` to force the emulator to use
@@ -84,15 +85,24 @@ echo "MEMORY (RAM)    - ${OPT_MEMORY}MB"
 echo "DISK PARTITION  - ${OPT_PARTITION_SIZE}MB"
 echo "CPU CORES       - $OPT_CORES"
 
-emulator \
-  -avd android \
-  -gpu "$GPU_MODE" \
-  -memory "$OPT_MEMORY" \
-  -partition-size "$OPT_PARTITION_SIZE" \
-  -no-boot-anim \
-  -cores "$OPT_CORES" \
-  -ranchu \
-  $AUTH_FLAG \
-  -no-window \
-  -no-snapshot \
-  $EXTRA_FLAGS || update_state "ANDROID_STOPPED"
+EMULATOR_ARGS=(
+  -avd android
+  -gpu "$GPU_MODE"
+  -memory "$OPT_MEMORY"
+  -partition-size "$OPT_PARTITION_SIZE"
+  -no-boot-anim
+  -no-metrics
+  -cores "$OPT_CORES"
+  -ranchu
+  -no-window
+  -no-snapshot
+)
+if [ "$OPT_SKIP_AUTH" == "true" ]; then
+  EMULATOR_ARGS+=( -skip-adb-auth )
+fi
+EMULATOR_ARGS+=( "${EXTRA_EMULATOR_FLAGS[@]}" )
+
+if ! emulator "${EMULATOR_ARGS[@]}"; then
+  update_state "ANDROID_STOPPED"
+  exit 1
+fi

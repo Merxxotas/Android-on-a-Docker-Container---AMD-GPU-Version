@@ -10,9 +10,9 @@ services:
         - GPU_ACCELERATED=true
     container_name: android
     environment:
-      - RAM_SIZE=8G
-      - DISK_SIZE=64G
-      - CPU_CORES=8
+      - RAM_SIZE=${ANDROID_DOCKER_RAM_SIZE:-8G}
+      - DISK_SIZE=${ANDROID_DOCKER_DISK_SIZE:-64G}
+      - CPU_CORES=${ANDROID_DOCKER_CPU_CORES:-8}
       - DISABLE_ANIMATION=false
       - DISABLE_HIDDEN_POLICY=true
       - SKIP_AUTH=false
@@ -37,7 +37,7 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ./data
+        source: ${ANDROID_DOCKER_DATA_DIR:-./data}
         target: /data
     extra_hosts:
       - "host.docker.internal:host-gateway"
