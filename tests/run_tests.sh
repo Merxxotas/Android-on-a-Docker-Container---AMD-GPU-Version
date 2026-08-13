@@ -1,18 +1,46 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # ==============================================================================
 # Automated Test Suite for Android 13 Docker Emulator Environment
 # ==============================================================================
 
-set -e
+set -euo pipefail
 
-RED='\030[0;31m'
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ADB="$SCRIPT_DIR/../scripts/project-adb.sh"
+
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
 echo "=================================================="
 echo "🧪 Running Automated Tests for Android Docker"
 echo "=================================================="
+
+"$SCRIPT_DIR/../scripts/setup-adb-key.sh"
+
+KEY_HOME="${ANDROID_DOCKER_ADB_HOME:-${HOME}/.local/share/android-docker/adb-home}"
+PRIVATE_KEY="$KEY_HOME/.android/adbkey"
+PUBLIC_KEY="$KEY_HOME/.android/adbkey.pub"
+PRIVATE_FINGERPRINT=$(sha256sum "$PRIVATE_KEY" | awk '{print $1}')
+if [ "$(stat -c '%a' "$PRIVATE_KEY")" != "600" ] || [ "$(stat -c '%a' "$KEY_HOME/.android")" != "700" ]; then
+    echo -e "${RED}FAILED (project ADB key permissions are too broad)${NC}"
+    exit 1
+fi
+"$SCRIPT_DIR/../scripts/setup-adb-key.sh" >/dev/null
+if [ "$PRIVATE_FINGERPRINT" != "$(sha256sum "$PRIVATE_KEY" | awk '{print $1}')" ]; then
+    echo -e "${RED}FAILED (project ADB key was replaced on second setup)${NC}"
+    exit 1
+fi
+if [ -e "$SCRIPT_DIR/../keys/adbkey" ] || [ -e "$SCRIPT_DIR/../keys/adbkey.pub" ]; then
+    echo -e "${RED}FAILED (repository still contains ADB key files)${NC}"
+    exit 1
+fi
+if [ ! -s "$PUBLIC_KEY" ]; then
+    echo -e "${RED}FAILED (project public key is missing)${NC}"
+    exit 1
+fi
+echo -e "${GREEN}Project ADB key bootstrap checks passed${NC}"
 
 # Test 1: Check Docker Installation
 echo -n "Test 1: Checking Docker installation... "
@@ -51,7 +79,7 @@ fi
 
 # Test 5: Check ADB Server & Emulator Connectivity
 echo -n "Test 5: Checking ADB connection (127.0.0.1:5555)... "
-if adb connect 127.0.0.1:5555 2>&1 | grep -qE "connected|already"; then
+if "$PROJECT_ADB" connect 127.0.0.1:5555 2>&1 | grep -qE "connected|already"; then
     echo -e "${GREEN}PASSED${NC}"
 else
     echo -e "${RED}FAILED (Unable to connect to ADB on 127.0.0.1:5555)${NC}"
@@ -60,7 +88,7 @@ fi
 
 # Test 6: Check Emulator Boot Status (sys.boot_completed)
 echo -n "Test 6: Checking Android OS boot completion... "
-BOOT_STATUS=$(adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+BOOT_STATUS=$("$PROJECT_ADB" -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
 if [ "$BOOT_STATUS" == "1" ]; then
     echo -e "${GREEN}PASSED (Android OS booted successfully)${NC}"
 else
@@ -69,8 +97,8 @@ fi
 
 # Test 7: Verify Android Version & API Level
 echo -n "Test 7: Verifying Android API Level... "
-API_LEVEL=$(adb -s 127.0.0.1:5555 shell getprop ro.build.version.sdk 2>/dev/null | tr -d '\r')
-ANDROID_VER=$(adb -s 127.0.0.1:5555 shell getprop ro.build.version.release 2>/dev/null | tr -d '\r')
+API_LEVEL=$("$PROJECT_ADB" -s 127.0.0.1:5555 shell getprop ro.build.version.sdk 2>/dev/null | tr -d '\r')
+ANDROID_VER=$("$PROJECT_ADB" -s 127.0.0.1:5555 shell getprop ro.build.version.release 2>/dev/null | tr -d '\r')
 if [ "$API_LEVEL" == "33" ]; then
     echo -e "${GREEN}PASSED (API Level 33 / Android $ANDROID_VER)${NC}"
 else
@@ -79,7 +107,7 @@ fi
 
 # Test 8: Verify Google Play Store Installation
 echo -n "Test 8: Checking Google Play Store presence... "
-if adb -s 127.0.0.1:5555 shell pm list packages 2>/dev/null | grep -q "com.android.vending"; then
+if "$PROJECT_ADB" -s 127.0.0.1:5555 shell pm list packages 2>/dev/null | grep -q "com.android.vending"; then
     echo -e "${GREEN}PASSED (com.android.vending installed)${NC}"
 else
     echo -e "${RED}NOTICE (Play Store package not detected yet)${NC}"

@@ -27,7 +27,7 @@ jobs:
       - name: Shell Script Linting (ShellCheck)
         run: |
           sudo apt-get update && sudo apt-get install -y shellcheck
-          shellcheck scripts/*.sh tests/*.sh || echo "ShellCheck validation complete"
+          shellcheck scripts/*.sh tests/*.sh
 
   build-and-test:
     name: Docker Build & Automated Integration Tests
@@ -41,24 +41,25 @@ jobs:
           sudo apt-get update && sudo apt-get install -y qemu-kvm libvirt-daemon-system cpu-checker android-tools-adb
           sudo chmod 666 /dev/kvm || true
           sudo mkdir -p /dev/dri || true
-          mkdir -p keys
-          if [ ! -f keys/adbkey ]; then
-            adb keygen keys/adbkey
-          fi
+          export ANDROID_DOCKER_ADB_HOME="$RUNNER_TEMP/android-docker-adb"
+          ./scripts/setup-adb-key.sh
 
       - name: Build Android Docker Image
         run: |
+          export ANDROID_DOCKER_ADB_HOME="$RUNNER_TEMP/android-docker-adb"
           docker compose build
 
       - name: Start Android Emulator Container
         run: |
+          export ANDROID_DOCKER_ADB_HOME="$RUNNER_TEMP/android-docker-adb"
           docker compose up -d
 
       - name: Wait for ADB & Boot Completion
         run: |
+          export ANDROID_DOCKER_ADB_HOME="$RUNNER_TEMP/android-docker-adb"
           echo "Waiting for ADB connection..."
           for i in {1..30}; do
-            if adb connect 127.0.0.1:5555 2>&1 | grep -qE "connected|already"; then
+            if ./scripts/project-adb.sh connect 127.0.0.1:5555 2>&1 | grep -qE "connected|already"; then
               echo "ADB connected!"
               break
             fi
@@ -67,10 +68,12 @@ jobs:
 
       - name: Run Automated Test Suite
         run: |
+          export ANDROID_DOCKER_ADB_HOME="$RUNNER_TEMP/android-docker-adb"
           chmod +x tests/run_tests.sh
-          ./tests/run_tests.sh || echo "Test suite completed"
+          ./tests/run_tests.sh
 
       - name: Container Logs on Failure
         if: failure()
         run: |
+          export ANDROID_DOCKER_ADB_HOME="$RUNNER_TEMP/android-docker-adb"
           docker compose logs --tail=100
