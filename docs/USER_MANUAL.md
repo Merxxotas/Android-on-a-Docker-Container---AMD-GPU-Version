@@ -117,6 +117,8 @@ The repository includes a comprehensive automated test suite and GitHub Actions 
 ./tests/run_tests.sh
 ```
 
+The integration test is intentionally local and on demand. It uses a disposable data directory and does not replace your persistent emulator data. GitHub Actions performs hosted lint, Compose, security, and image-build checks; it does not boot Android.
+
 **Automated Tests Verified**:
 1. Docker installation & version
 2. `/dev/kvm` hardware virtualization access
@@ -128,8 +130,8 @@ The repository includes a comprehensive automated test suite and GitHub Actions 
 8. Google Play Store package verification (`com.android.vending`)
 
 ### GitHub Actions Pipeline (`.github/workflows/ci.yml`):
-- Triggers automatically on every `push` or `pull_request` to `main`.
-- Runs ShellCheck linting, Docker build, KVM emulation boot, and automated tests.
+- Triggers automatically on relevant code `push` or `pull_request` changes to `main`.
+- Runs ShellCheck linting, Compose validation, security checks, and Docker image builds. Full emulator integration remains a local on-demand test.
 
 ---
 

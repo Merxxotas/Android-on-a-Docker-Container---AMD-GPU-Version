@@ -38,17 +38,16 @@ An optimized environment to run an **Android 13 (API 33)** emulator with **Googl
 ├── docs/
 │   ├── SYSTEM_RECREATION.md    # Clean setup & reinstallation guide from scratch
 │   └── USER_MANUAL.md          # Complete user manual (scrcpy, ADB commands, shortcuts & specs)
-├── keys/                       # Pre-seeded ADB authorization keys
-│   ├── adbkey
-│   └── adbkey.pub
 ├── scripts/
 │   ├── android-start.sh        # Starts container and launches scrcpy at 60 FPS in 1 click
 │   ├── android-stop.sh         # Safely stops container to free RAM & CPU
 │   ├── android-status.sh       # Displays container stats, CPU/RAM usage, and ADB status
 │   ├── install-sdk.sh          # Downloads Android SDK & API 33 Play Store system image
-│   └── start-emulator.sh       # Container entrypoint with dynamic RAM & DISK_SIZE parsing
+│   ├── start-emulator.sh       # Container entrypoint with dynamic RAM & DISK_SIZE parsing
+│   └── wait-for-emulator.sh    # Authenticated boot/readiness check
 ├── tests/
-│   └── run_tests.sh            # Automated test suite (KVM, Compose syntax, ADB, Boot status)
+│   ├── run_integration.sh      # On-demand local emulator integration test
+│   └── run_tests.sh            # Compatibility wrapper for run_integration.sh
 ├── data/                       # Local volume mount for persistent AVD disk storage
 └── upstream/                   # Preserved original HQarroum/docker-android repository
 ```
@@ -69,6 +68,8 @@ An optimized environment to run an **Android 13 (API 33)** emulator with **Googl
    ```bash
    ./tests/run_tests.sh
    ```
+
+   This is an on-demand local test. GitHub Actions does not boot the emulator because hosted runners do not provide dependable KVM support.
 
 ---
 

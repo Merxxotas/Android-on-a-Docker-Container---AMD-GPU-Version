@@ -177,6 +177,8 @@ services:
    ./tests/run_tests.sh
    ```
 
+The integration test is local and on demand. It requires `/dev/kvm`, at least 80 GiB of free disk, and enough RAM for the emulator. GitHub Actions validates the image and configuration but does not boot Android.
+
 ## 5. Key Rotation and AVD Recovery
 
 If a project key is exposed, stop the container, move the existing `data/` directory to a private mode-`0700` quarantine outside the repository, generate a replacement project key, and boot a fresh AVD. Recover only the files you explicitly need from the quarantine. On physical Android devices, revoke USB debugging authorizations before approving a replacement host key.
